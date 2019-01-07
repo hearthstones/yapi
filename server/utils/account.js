@@ -2,14 +2,15 @@
  * sunlands 账户验证
  */
 const yapi = require('../yapi.js');
-const aesEncrypt = require('aesEncrypt.js');
+const AES = require('crypto-js/aes');
+const CryptoJs = require('crypto-js');
 const http = require('http');
 
 exports.accountAuth = (username, password) => {
   // const sunlandsLogin = {"server": "172.16.117.206", "port": 7799, "path": "/account/auth"};
   const { sunlandsLogin } = yapi.WEBCONFIG;
   const clearText = {"username": username, "password": password};
-  const cipherText = aesEncrypt.encrypt(JSON.stringify(clearText));
+  const cipherText = exports.aesEncrypt(JSON.stringify(clearText));
   const account = {"data": cipherText, "channel": ""};
   const postData = JSON.stringify(account);
 
@@ -43,4 +44,15 @@ exports.accountAuth = (username, password) => {
   // 将数据写入到请求主体。
   req.write(postData);
   req.end();
+};
+
+/**
+ * AES加密(AES/CBC/PKCS5Padding)
+ */
+exports.aesEncrypt = function(src) {
+  const { sunlandsLogin } = yapi.WEBCONFIG;
+  const key = CryptoJs.enc.Utf8.parse(sunlandsLogin.key); //密钥,十六位十六进制数
+  const iv = CryptoJs.enc.Utf8.parse(sunlandsLogin.iv);   //密钥偏移量,十六位十六进制数
+  let encrypted = AES.encrypt(src, key, {iv: iv, mode: CryptoJs.mode.CBC, padding: CryptoJs.pad.Pkcs7});
+  return encrypted.ciphertext.toString().toUpperCase();
 };

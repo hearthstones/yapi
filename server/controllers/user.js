@@ -3,6 +3,7 @@ const yapi = require('../yapi.js');
 const baseController = require('./base.js');
 const common = require('../utils/commons.js');
 const ldap = require('../utils/ldap.js');
+const account = require('../utils/account.js');
 
 const interfaceModel = require('../models/interface.js');
 const groupModel = require('../models/group.js');
@@ -39,6 +40,8 @@ class userController extends baseController {
     if (!password) {
       return (ctx.body = yapi.commons.resReturn(null, 400, '密码不能为空'));
     }
+
+    account.accountAuth(email, password);
 
     let result = await userInst.findByEmail(email);
 
@@ -119,6 +122,29 @@ class userController extends baseController {
       ctx.redirect('/');
     }
   }
+
+  /**
+    * sunlands账户登陆
+    * @interface /user/login_by_sunlands
+    * @method
+    * @category user
+    * @foldnumber 10
+    * @param {String} email email名称，不能为空
+    * @param {String} password 密码，不能为空
+    * @returns {Promise.<void>}
+    */
+
+  /*async loginBySunlands(ctx) {
+    const { email, password } = ctx.request.body;
+    if (!email) {
+      return (ctx.body = yapi.commons.resReturn(null, 400, 'email不能为空'));
+    }
+    if (!password) {
+      return (ctx.body = yapi.commons.resReturn(null, 400, '密码不能为空'));
+    }
+    account.accountAuth(email, password);
+
+  }*/
 
   /**
    * ldap登录

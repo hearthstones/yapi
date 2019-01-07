@@ -30,7 +30,7 @@ class userController extends baseController {
    */
   async login(ctx) {
     //登录
-    let userInst = yapi.getInst(userModel); //创建user实体
+    // let userInst = yapi.getInst(userModel); //创建user实体
     let email = ctx.request.body.email;
     let password = ctx.request.body.password;
 
@@ -41,32 +41,34 @@ class userController extends baseController {
       return (ctx.body = yapi.commons.resReturn(null, 400, '密码不能为空'));
     }
 
-    account.accountAuth(email, password);
+    // let result = await userInst.findByEmail(email);
 
-    let result = await userInst.findByEmail(email);
+    const username = email.split(/\@/g)[0];
+    let result = await account.accountAuth(username, password);
+    console.log(result);
 
-    if (!result) {
-      return (ctx.body = yapi.commons.resReturn(null, 404, '该用户不存在'));
-    } else if (yapi.commons.generatePassword(password, result.passsalt) === result.password) {
-      this.setLoginCookie(result._id, result.passsalt);
-
-      return (ctx.body = yapi.commons.resReturn(
-        {
-          username: result.username,
-          role: result.role,
-          uid: result._id,
-          email: result.email,
-          add_time: result.add_time,
-          up_time: result.up_time,
-          type: 'site',
-          study: result.study
-        },
-        0,
-        'logout success...'
-      ));
-    } else {
-      return (ctx.body = yapi.commons.resReturn(null, 405, '密码错误'));
-    }
+    // if (!result) {
+    //   return (ctx.body = yapi.commons.resReturn(null, 404, '该用户不存在'));
+    // } else if (yapi.commons.generatePassword(password, result.passsalt) === result.password) {
+    //   this.setLoginCookie(result._id, result.passsalt);
+    //
+    //   return (ctx.body = yapi.commons.resReturn(
+    //     {
+    //       username: result.username,
+    //       role: result.role,
+    //       uid: result._id,
+    //       email: result.email,
+    //       add_time: result.add_time,
+    //       up_time: result.up_time,
+    //       type: 'site',
+    //       study: result.study
+    //     },
+    //     0,
+    //     'logout success...'
+    //   ));
+    // } else {
+    //   return (ctx.body = yapi.commons.resReturn(null, 405, '密码错误'));
+    // }
   }
 
   /**

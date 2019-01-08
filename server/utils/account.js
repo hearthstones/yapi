@@ -7,43 +7,61 @@ const CryptoJs = require('crypto-js');
 const http = require('http');
 
 exports.accountAuth = (username, password) => {
-  // const sunlandsLogin = {"server": "172.16.117.206", "port": 7799, "path": "/account/auth"};
-  const { sunlandsLogin } = yapi.WEBCONFIG;
-  const clearText = {"username": username, "password": password};
-  const cipherText = exports.aesEncrypt(JSON.stringify(clearText));
-  const account = {"data": cipherText, "channel": ""};
-  const postData = JSON.stringify(account);
+  return new Promise((resolve, reject) => {
+    const { sunlandsLogin } = yapi.WEBCONFIG;
+    const clearText = {"username": username, "password": password};
+    const cipherText = exports.aesEncrypt(JSON.stringify(clearText));
+    const account = {"data": cipherText, "channel": ""};
+    const postData = JSON.stringify(account);
+    const options = {
+      host: sunlandsLogin.server,
+      port: sunlandsLogin.port,
+      path: sunlandsLogin.path,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': postData.length
+      }
+    };
 
-  const options = {
-    host: sunlandsLogin.server,
-    port: sunlandsLogin.port,
-    path: sunlandsLogin.path,
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': postData.length
-    }
-  };
-
-  const req = http.request(options, (res) => {
-    console.log(`状态码: ${res.statusCode}`);
-    console.log(`响应头: ${JSON.stringify(res.headers)}`);
-    res.setEncoding('utf8');
-    res.on('data', (chunk) => {
-      console.log(`响应主体: ${chunk}`);
+    const req = http.request(options, (res) => {
+      console.log(`状态码: ${res.statusCode}`);
+      console.log(`响应头: ${JSON.stringify(res.headers)}`);
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => {
+        console.log(`响应主体: ${chunk}`);
+      });
+      res.on('end', (chunk) => {
+        if (res.statusCode === 200) {
+          let msg = {
+            type: true,
+            message: `验证成功`
+          };
+          resolve(msg);
+        } else {
+          let msg = {
+            type: false,
+            message: `用户名或密码不正确: ${chunk}`
+          };
+          reject(msg);
+        }
+        console.log('响应中已无数据');
+      });
     });
-    res.on('end', () => {
-      console.log('响应中已无数据');
+
+    req.on('error', (e) => {
+      console.error(`请求遇到问题: ${e.message}`);
+      let msg = {
+        type: false,
+        message: `error: ${e}`
+      };
+      reject(msg);
     });
-  });
 
-  req.on('error', (e) => {
-    console.error(`请求遇到问题: ${e.message}`);
+    // 将数据写入到请求主体.
+    req.write(postData);
+    req.end();
   });
-
-  // 将数据写入到请求主体。
-  req.write(postData);
-  req.end();
 };
 
 /**

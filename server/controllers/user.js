@@ -33,7 +33,9 @@ class userController extends baseController {
       const { email, password } = ctx.request.body;
       const username = email.split(/\@/g)[0];
       console.log(username);
-      account.accountAuth(username, password);
+      await account.accountAuth(username, password);
+
+      console.log("account()后 继续");
       let login = await this.handleThirdLogin(email, username);
 
       if (login === true) {
@@ -153,6 +155,7 @@ class userController extends baseController {
       const { email, password } = ctx.request.body;
       // const username = email.split(/\@/g)[0];
       const { info: ldapInfo } = await ldap.ldapQuery(email, password);
+      console.log("ldap.ldapQuery()后 继续");
       const emailPrefix = email.split(/\@/g)[0];
       const emailPostfix = yapi.WEBCONFIG.ldapLogin.emailPostfix;
 

@@ -148,7 +148,7 @@ let routerConfig = {
       method: 'all'
     },
     {
-      action: 'getLdapAuth',
+      action: 'loginBySunlands',
       path: 'login_by_ldap',
       method: 'all'
     },

@@ -10,8 +10,8 @@ exports.accountAuth = (username, password) => {
   return new Promise((resolve, reject) => {
     const { sunlandsLogin } = yapi.WEBCONFIG;
     const clearText = {"username": username, "password": password};
-    const cipherText = exports.aesEncrypt(JSON.stringify(clearText));
-    const account = {"data": cipherText, "channel": ""};
+    const cipherText = exports.aesEncrypt(JSON.stringify(clearText)); //密文
+    const account = {"data": cipherText, "channel": ""}; //todo: 生产环境需要channel
     const postData = JSON.stringify(account);
     const options = {
       host: sunlandsLogin.server,
@@ -43,11 +43,10 @@ exports.accountAuth = (username, password) => {
         } else {
           let msg = {
             type: false,
-            message: `用户名或密码不正确: ${response}`
+            message: response.error
           };
           reject(msg);
         }
-        console.log('响应中已无数据');
       });
     });
 

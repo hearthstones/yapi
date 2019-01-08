@@ -29,36 +29,41 @@ class userController extends baseController {
    * @example ./api/user/login.json
    */
   async login(ctx) {
-    try {
-      const { email, password } = ctx.request.body;
-      const username = email.split(/\@/g)[0];
-      console.log(username);
-      await account.accountAuth(username, password);
+    //登录
+    let userInst = yapi.getInst(userModel); //创建user实体
+    let email = ctx.request.body.email;
+    let password = ctx.request.body.password;
 
-      console.log("account()后 继续");
-      let login = await this.handleThirdLogin(email, username);
+    if (!email) {
+      return (ctx.body = yapi.commons.resReturn(null, 400, 'email不能为空'));
+    }
+    if (!password) {
+      return (ctx.body = yapi.commons.resReturn(null, 400, '密码不能为空'));
+    }
 
-      if (login === true) {
-        let userInst = yapi.getInst(userModel); //创建user实体
-        let result = await userInst.findByEmail(email);
-        return (ctx.body = yapi.commons.resReturn(
-            {
-              username: result.username,
-              role: result.role,
-              uid: result._id,
-              email: result.email,
-              add_time: result.add_time,
-              up_time: result.up_time,
-              type: result.type || 'third',
-              study: result.study
-            },
-            0,
-            'logout success...'
-        ));
-      }
-    } catch (e) {
-      yapi.commons.log(e.message, 'error');
-      return (ctx.body = yapi.commons.resReturn(null, 401, e.message));
+    let result = await userInst.findByEmail(email);
+
+    if (!result) {
+      return (ctx.body = yapi.commons.resReturn(null, 404, '该用户不存在'));
+    } else if (yapi.commons.generatePassword(password, result.passsalt) === result.password) {
+      this.setLoginCookie(result._id, result.passsalt);
+
+      return (ctx.body = yapi.commons.resReturn(
+          {
+            username: result.username,
+            role: result.role,
+            uid: result._id,
+            email: result.email,
+            add_time: result.add_time,
+            up_time: result.up_time,
+            type: 'site',
+            study: result.study
+          },
+          0,
+          'logout success...'
+      ));
+    } else {
+      return (ctx.body = yapi.commons.resReturn(null, 405, '密码错误'));
     }
   }
 
@@ -118,26 +123,45 @@ class userController extends baseController {
 
   /**
     * sunlands账户登陆
-    * @interface /user/login_by_sunlands
+    * @interface /user/login_by_ldap 减少修改成本，替换ldap登陆
     * @method
     * @category user
     * @foldnumber 10
     * @param {String} email email名称，不能为空
     * @param {String} password 密码，不能为空
-    * @returns {Promise.<void>}
+    * @returns {Promise<{errcode, data, errmsg}>}
     */
 
-  /*async loginBySunlands(ctx) {
-    const { email, password } = ctx.request.body;
-    if (!email) {
-      return (ctx.body = yapi.commons.resReturn(null, 400, 'email不能为空'));
-    }
-    if (!password) {
-      return (ctx.body = yapi.commons.resReturn(null, 400, '密码不能为空'));
-    }
-    account.accountAuth(email, password);
+  async loginBySunlands(ctx) {
+    try {
+      const { email, password } = ctx.request.body;
+      const username = email.split(/\@/g)[0];
+      await account.accountAuth(username, password);
 
-  }*/
+      let login = await this.handleThirdLogin(email, username);
+      if (login === true) {
+        let userInst = yapi.getInst(userModel); //创建user实体
+        let result = await userInst.findByEmail(email);
+        return (ctx.body = yapi.commons.resReturn(
+            {
+              username: result.username,
+              role: result.role,
+              uid: result._id,
+              email: result.email,
+              add_time: result.add_time,
+              up_time: result.up_time,
+              type: result.type || 'third',
+              study: result.study
+            },
+            0,
+            'logout success...'
+        ));
+      }
+    } catch (e) {
+      yapi.commons.log(e.message, 'error');
+      return (ctx.body = yapi.commons.resReturn(null, 401, e.message));
+    }
+  }
 
   /**
    * ldap登录
@@ -155,7 +179,6 @@ class userController extends baseController {
       const { email, password } = ctx.request.body;
       // const username = email.split(/\@/g)[0];
       const { info: ldapInfo } = await ldap.ldapQuery(email, password);
-      console.log("ldap.ldapQuery()后 继续");
       const emailPrefix = email.split(/\@/g)[0];
       const emailPostfix = yapi.WEBCONFIG.ldapLogin.emailPostfix;
 
@@ -163,8 +186,6 @@ class userController extends baseController {
         ldapInfo[yapi.WEBCONFIG.ldapLogin.emailKey || 'mail'] ||
         (emailPostfix ? emailPrefix + emailPostfix : email);
       const username = ldapInfo[yapi.WEBCONFIG.ldapLogin.usernameKey] || emailPrefix;
-
-      console.log("emailParams" + emailParams);
 
       let login = await this.handleThirdLogin(emailParams, username);
 

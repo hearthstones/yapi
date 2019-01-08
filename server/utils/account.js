@@ -25,14 +25,16 @@ exports.accountAuth = (username, password) => {
     };
 
     const req = http.request(options, (res) => {
+      let response;
       console.log(`状态码: ${res.statusCode}`);
       console.log(`响应头: ${JSON.stringify(res.headers)}`);
       res.setEncoding('utf8');
       res.on('data', (chunk) => {
+        response = JSON.parse(chunk);
         console.log(`响应主体: ${chunk}`);
       });
-      res.on('end', (chunk) => {
-        if (res.statusCode === 200) {
+      res.on('end', () => {
+        if (response.flag === 1) {
           let msg = {
             type: true,
             message: `验证成功`
@@ -41,7 +43,7 @@ exports.accountAuth = (username, password) => {
         } else {
           let msg = {
             type: false,
-            message: `用户名或密码不正确: ${chunk}`
+            message: `用户名或密码不正确: ${response}`
           };
           reject(msg);
         }

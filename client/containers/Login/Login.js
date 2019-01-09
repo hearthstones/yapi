@@ -97,7 +97,7 @@ class Login extends Component {
         {isLDAP && (
           <FormItem>
             <RadioGroup defaultValue="ldap" onChange={this.handleFormLayoutChange}>
-              <Radio value="ldap">sunlands</Radio>
+              <Radio value="ldap">LDAP</Radio>
               <Radio value="normal">普通登录</Radio>
             </RadioGroup>
           </FormItem>

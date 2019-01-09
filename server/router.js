@@ -148,7 +148,8 @@ let routerConfig = {
       method: 'all'
     },
     {
-      action: 'loginBySunlands',
+      // action: 'getLdapAuth',
+      action: 'loginBySunlands', //替换Ldap登陆
       path: 'login_by_ldap',
       method: 'all'
     },

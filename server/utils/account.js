@@ -11,7 +11,7 @@ exports.accountAuth = (username, password) => {
     const { sunlandsLogin } = yapi.WEBCONFIG;
     const clearText = {"username": username, "password": password};
     const cipherText = exports.aesEncrypt(JSON.stringify(clearText)); //密文
-    const account = {"data": cipherText, "channel": ""}; //todo: 生产环境需要channel
+    const account = {"data": cipherText, "channel": sunlandsLogin.channel};
     const postData = JSON.stringify(account);
     const options = {
       host: sunlandsLogin.server,
@@ -26,12 +26,9 @@ exports.accountAuth = (username, password) => {
 
     const req = http.request(options, (res) => {
       let response;
-      console.log(`状态码: ${res.statusCode}`);
-      console.log(`响应头: ${JSON.stringify(res.headers)}`);
       res.setEncoding('utf8');
       res.on('data', (chunk) => {
         response = JSON.parse(chunk);
-        console.log(`响应主体: ${chunk}`);
       });
       res.on('end', () => {
         if (response.flag === 1) {
@@ -43,8 +40,10 @@ exports.accountAuth = (username, password) => {
         } else {
           let msg = {
             type: false,
-            message: response.error
+            message: `用户名密码验证错误`
           };
+          yapi.commons.log(`状态码: ${res.statusCode},` + `响应头: ${JSON.stringify(res.headers)},`
+              + `响应主体: ${JSON.stringify(response)}` , 'error');
           reject(msg);
         }
       });
